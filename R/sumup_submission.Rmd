@@ -1,0 +1,180 @@
+---
+title: "Sum-up Feedback Form"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(fontawesome)
+fa_html_dependency()
+```
+
+```{r results='asis', echo=FALSE}
+cat('
+<style>
+.competency-block {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden; /* keeps rounded corners tidy */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.competency-header {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  padding: 10px 12px;
+  font-size: 1.1em;
+}
+
+.competency-header-concern {
+  background-color: red; /* Bootstrap blue */
+  color: white;
+  font-weight: bold;
+  padding: 10px 12px;
+  font-size: 1.1em;
+}
+
+.feedback {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;  /* text at top */
+  padding: 8px 12px;
+  border-top: 1px solid #eee;
+  background-color: #f9f9f9;
+}
+
+.feedback-text {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.feedback-icons {
+  display: flex;
+  align-items: flex-end; /* aligns icon(s) at bottom */
+}
+
+.feedback-icons i {
+  font-size: 1.2em;
+  color: #007bff;
+}
+</style>')
+
+
+cat("<script>\n")
+cat("window.outputData = ")
+cat(output_json)
+cat(";\n")
+cat("</script>\n")
+
+
+cat('<div id="submission-content"></div>\n')
+cat('<div id="debug"></div>\n')
+
+```
+<script> 
+window.addEventListener("DOMContentLoaded", function() { 
+	// Get submissionId from URL 
+	const urlParams = new URLSearchParams(window.location.search); 
+	const submissionId = urlParams.get("id"); 
+	
+	// Flatten all feedback rows across topics 
+	let allFeedback = []; 
+	if (window.outputData && Array.isArray(window.outputData)) { 
+		window.outputData.forEach(topic => { 
+			if (topic.feedback && Array.isArray(topic.feedback)) { 
+				topic.feedback.forEach(fb => { 
+					fb._topic_domain = topic.topic_domain; 
+					fb._topic_name = topic.topic_name; 
+					allFeedback.push(fb); 
+				}); 
+			} 
+		}); 
+	} 
+	
+	// Filter feedback by submissionId 
+	const submissionFeedback = allFeedback.filter( fb => String(fb.submissionid) === String(submissionId) ); 
+	console.log(submissionFeedback);
+	
+	// Render grouped by competency 
+	const contentDiv = document.getElementById("submission-content")||document.getElementById("section-submission-content"); 
+	if (contentDiv) { 
+		if (submissionFeedback.length > 0) { 
+			const dateRef = submissionFeedback[0].datereferenced || "";
+			const formattedDate = dateRef ? new Date(dateRef).toLocaleDateString("nl-NL") : ""; 
+			//let html = `<h2>Submission ${submissionId}</h2> <p><strong>Datum:</strong> ${formattedDate}</p> <hr/>`; 
+			let html = `<p>Op deze pagina ziet u de invulvelden uit de originele submissie, de competentie waarbij het was ingevuld, en indien beschikbaar, of het als sterk of verbeterpunt is opgemerkt. Als er zorgpunten zijn aangeduid, is de kop van de betreffende competentie(s) rood gekleurd.<br /><strong>Datum:</strong> ${formattedDate}</p> <hr/>`; 
+			
+			const byCompetency = {}; 
+      
+      submissionFeedback.forEach(fb => { 
+        //const comp = fb.competency || "-- Feedback"; 
+        const comp = (fb.competency == "NA") ? "-- Feedback" : fb.competency;
+        const compId = (fb.competencyid == null || isNaN(fb.competencyid)) ? 9999 : fb.competencyid;
+
+        if (!byCompetency[comp]) {
+          byCompetency[comp] = { 
+            id: compId, 
+            feedback: [],
+            zorgpunt: fb.zorgpunt,
+            seen: new Set()
+          }; 
+        }
+      
+        if (fb.comment) {
+          const type = fb.feedbacktype || "unknown";
+          const key = (fb.comment.trim() + "|" + type).toLowerCase(); // safer dedupe
+      
+          if (!byCompetency[comp].seen.has(key)) {
+            byCompetency[comp].seen.add(key);
+            byCompetency[comp].feedback.push({
+              comment: fb.comment.trim(),
+              feedbacktype: type
+            });
+          }
+        }
+      });
+      
+      // Sort by competencyid
+      const sortedCompetencies = Object.entries(byCompetency)
+        .sort((a, b) => a[1].id - b[1].id);
+      
+     sortedCompetencies.forEach(([comp, data]) => {
+     console.log(comp)
+     console.log(data)
+        // Competency header
+        html += `<div class="competency-block">`;
+        if(data.zorgpunt > 0) {
+          html += `<div class="competency-header-concern">${comp}</div>`;
+        }
+        else {
+          html += `<div class="competency-header">${comp}</div>`;
+        }
+        // Feedback items
+        data.feedback.forEach(fb => {
+          html += `<div class="feedback">`;
+          html += `<span class="feedback-text">${fb.comment}</span>`;
+          html += `<span class="feedback-icons">`;
+      
+          if (fb.feedbacktype === "sterk") {
+            html += `<i class="fa fa-thumbs-up"></i>`;
+          } else if (fb.feedbacktype === "verbeter") {
+            html += `<i class="fa fa-hand-point-right"></i>`;
+          }
+      
+          html += `</span>`;
+          html += `</div>`;
+        });
+      
+        html += `</div>`; // close competency-block
+      });
+
+			contentDiv.innerHTML = html; 
+		} 
+		else { 
+			contentDiv.innerHTML = "<p><em>No feedback available for this submission.</em></p>"; 
+		} 
+	} 
+}); 
+</script>

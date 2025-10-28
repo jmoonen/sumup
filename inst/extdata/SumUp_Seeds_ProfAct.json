@@ -1,0 +1,59 @@
+{
+  "seeded_topics": [
+    ["anamnese", "lichamelijk", "onderzoek", "percussie", "auscultatie", "demping", "temperatuur", "bloeddruk", "gesloten vragen", "open vragen", "empathie", "empathisch", "zintuig", "pasgeborene", "kind", "ouder", "mso", "uitkleden", "heteroanamnese", "gewicht", "risicofactor", "lengte", "hartslag", "vitale functies", "aankleden", "bmi", "samenvatten", "samenvatting", "doorvragen", "gevoelsreflectie", "parafraseren", "pols", "onderzoeksbank"],
+    ["differentiaaldiagnose","dd", "formuleren", "systematisch", "integreren", "redeneren", "diagnose", "probleemstelling", "werkdiagnose", "waarschijnlijkheidsdiagnose", "alarmsymptomen", "redenatie"],
+    ["diagnostiek", "interpreteren", "interpretatie", "röntgen", "scan", "echo", "beeldvorming", "laboratorium", "richtlijn", "kosten", "functieonderzoek", "mri", "ct", "testen"],
+    ["herkennen", "interpreteren", "interpretatie", "afwijken", "afwijkend", "uitslag", "uitleg", "beslissing", "onderzoek", "lab", "voorafkans", "screenen", "screening", "resultaat", "resultaten", "uitkomst", "beslissen", "besliskunde"],
+    ["opstellen", "evalueren", "bijstellen", "behandelplan", "begeleidingsplan", "verwijzing", "consultvraag", "overleg", "zorgprofessionals", "hulpvraag", "wens", "therapie", "gezamenlijk", "recept", "beleid", "medicatie", "voorschrijven"],
+    ["gesprek", "communiceren", "optie", "consent", "indicatie", "complicatie", "risico", "alternatief", "documenteren", "vastleggen", "dossier", "samen", "beslissen", "hulpvraag", "therapietrouw", "afzien", "behandelplan", "besluitvorming", "gezamenlijk"],
+    ["gesprek", "communiceren", "uitslag", "diagnose", "prognose", "nieuws", "documenteren", "vastleggen", "dossier", "patiëntdossier", "empathie", "begrijpelijk", "taal", "palliatief", "naasten", "advanced care planning", "respectvol", "respect"],
+    ["gesprek", "communiceren", "lastig", "uitdagend", "collega", "collega's", "collegae", "zorgverlener", "meningsverschil", "documenteren", "vastleggen", "dossier", "nieuws", "empathisch", "empathie", "aansluiten", "invoegen", "emotie", "geruststellen", "geruststelling", "ontevreden", "informeren", "boos", "kwaad", "familiegesprek", "verdrietig", "agressie", "rechterlijke machtiging"],
+    ["informatie", "oorzaak", "voorwaarde", "gezond", "leefstijl", "voorkomen", "richtlijn", "context", "documenteren", "vastleggen", "dossier", "preventie", "risico", "roken", "alcohol", "gewicht", "motivatie", "motivational", "populatie", "risicocommunicatie", "drugs", "website", "folder"],
+    ["schriftelijk", "mondeling", "vastleggen", "vastlegging", "patiëntinformatie", "samenwerken", "samenwerking", "statusvoering", "delen", "opstellen", "brief", "brieven", "ontslagbrief", "verwijsbrief", "overdracht", "overdragen", "privacy", "wetgeving", "hoofdzaken", "bijzaken", "bijzaak", "adequaat", "informatie", "leesbaar", "taal", "helder", "essentie", "verslaglegging"],
+    ["interprofessioneel", "intraprofessioneel", "samenwerken", "samenwerking", "zorgverleners", "zorg", "bijdrage", "patiëntenzorg", "onderwijs", "samen", "mdo", "overleg", "beroep", "professie", "zorgplan", "gezamenlijk", "professioneel", "professional", "team", "zorgteam", "veilig", "patiëntveiligheid", "procedure", "onderling", "transmuraal", "thuiszorg", "verpleging", "verpleegkundige", "assistent"],
+    ["spoed", "spoedeisend", "abcde", "acuut", "reanimatie", "hartstilstand", "shock", "sepsis", "intoxicatie", "suïcide", "trauma", "ecg", "bloedgas", "intraveneus", "saturatie", "ernstig", "kortademig", "dyspnoe", "dood", "hartmassage", "beademing"]
+  ],
+  "topic_names":
+    [
+      "Anamnese en lichamelijk onderzoek",
+      "Opstellen van een differentiaaldiagnose",
+      "Opstellen van een plan voor aanvullend onderzoek",
+      "Interpreteren van diagnostiek",
+      "Opstellen van een behandel- of begeleidingsplan",
+      "Bespreken van diagnostische en therapeutsiche opties",
+      "Bespreken van uitslag en prognose",
+      "Voeren van bijzondere gesprekken",
+      "Geven van informatie en advies over gezonde leefstijl en preventie van ziekten",
+      "Schriftelijke en mondelinge overdracht van patiëntinformatie",
+      "Inter- en intraprofessionele samenwerking",
+      "Spoedeisende hulpverlening"
+    ],
+    "topic_domain":[
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten",
+      "Beroepsactiviteiten"
+    ],
+  "topic_addition": [
+      "Omvat het afnemen van een volledige en gerichte anamnese en hetero-anamnese in combinatie met een correct uitgevoerd en relevant lichamelijk onderzoek op een georganiseerde manier. De anamnese en het onderzoek zijn aangepast naar de specifieke klinische situatie en het specifieke patiëntcontact.",
+      "Omvat het formuleren van een geprioriteerde lijst van mogelijke diagnosen in een verscheidenheid aan praktijksettingen en patiëntkarakteristieken, gebruikmakend van een systematische aanpak. Door het integreren van verzamelde informatie en toepassen van vaardigheden in klinisch redeneren, komt de arts tot een werkdiagnose of werkhypothese.",
+      "Omvat het opstellen van een concreet plan voor aanvullend diagnostisch onderzoek aan de hand van de differentiaaldiagnose om tot een gericht voorstel voor een vervolgbeleid te kunnen komen, rekening houdend met testkarakteristieken, richtlijnen, beschikbaarheid, kosten, nadelige effecten en mogelijke impact op de patiënt.",
+      "Omvat het herkennen en interpreteren van normale en afwijkende uitslagen van een diagnostische of screenende test en het uitleggen wat dit betekent.",
+      "Omvat het opstellen (inclusief evalueren en bijstellen) van (een voorstel voor) een behandel- of begeleidingsplan voor veelvoorkomende problematiek voor verschillende praktijksettingen. Het plan kan onder andere bestaan uit een verwijzing, consultvraag of een recept. De arts overlegt waar nodig met andere zorgprofessionals.",
+      "Omvat het voeren van een gesprek met een patiënt en/of naasten over diagnostische en therapeutische opties. Het vragen van informed consent waarbij statistische aspecten, (contra-)indicaties, complicaties, risico’s en alternatieven van de diagnostische en therapeutische opties (of het afzien hiervan) besproken worden. Het vaststellen van het behandelplan in overleg met de patiënt (gezamenlijke besluitvorming) en het bespreken met de patiënt hoe hij/zij denkt de voorgestelde therapie te integreren in zijn/haar dagelijkse gang van zaken (therapietrouw). Documenteren van het gesprek en informed consent in het patiëntendossier.",
+      "Omvat het voeren van een gesprek met een patiënt en/of naasten over de uitslag, diagnose en bijbehorende prognose. Hieronder valt zowel het brengen van goed als slecht nieuws. Documenteren van het gesprek in het patiëntendossier.",
+      "Omvat het communiceren in lastige, uitdagende situaties met patiënten en/of naasten, collega’s of andere zorgverleners. Hieronder valt bijvoorbeeld het voeren van een slecht nieuws gesprek, een gesprek met een ontevreden, geëmotioneerde of agressieve patiënt of een meningsverschil met een collega of supervisor. Documenteren van het gesprek in het patiëntendossier.",
+      "Omvat het herkennen van situaties waarin ruimte is om de patiënt informatie te geven over de oorzaken van zijn ziekte, voorwaarden voor verbetering van het functioneren, gezonde leefstijl en het voorkómen van (verergering van) de ziekte of klacht, het belang hiervan uit kunnen leggen aan patiënten, gebruik maken van motiverende gespreksvoering en geldende richtlijnen en de context van de patiënt. Documenteren van het gesprek in het patiëntendossier.",
+      "Omvat statusvoering, delen van informatie met betrokkenen rond de patiënt, het opstellen van een ontslagbrief of verwijsbrief en het houden van mondelinge patiëntoverdracht, op complete en heldere wijze met de essentie en alle positieve en negatieve bevindingen die relevant zijn voor de klinische context, tevens rekening houdend met privacyoverwegingen en wetgeving.",
+      "Omvat samenwerken met andere zorgverleners en met de patiënt, met als gezamenlijk doel veiligere en betere zorg waarin de patiënt, gemeenschap of populatie centraal staat. Het leveren van een doeltreffende bijdrage aan inter- en intraprofessionele teams op het gebied van patiëntenzorg, onderwijs en onderzoek.",
+      "Omvat het herkennen van een patiënt die spoedeisende medische zorg nodig heeft en het op korte termijn stabiliseren van de patiënt en hulp inschakelen."
+    ]
+}

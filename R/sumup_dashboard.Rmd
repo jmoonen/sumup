@@ -1,0 +1,114 @@
+---
+title: "Sum-up dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    theme: cosmo
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(fontawesome)
+library(dplyr)
+```
+
+```{r, echo = FALSE, include=FALSE}
+# helper function for "quantity_cat" icons
+bar_icon <- function(value) {
+  if(value != "") {
+    icons <- c("battery-empty", "battery-quarter", "battery-half", "battery-three-quarters", "battery-full")
+    fa(icons[value + 1]) # because value is 0–4
+  }
+}
+
+# helper function for "quality_cat"
+quality_icon <- function(value) {
+  if (tolower(value) == "positive") return(fa("line-chart"))
+  if (tolower(value) == "negative") return(fa("exclamation-triangle"))
+  return("")
+}
+```
+
+```{r, echo=FALSE, results="asis"}
+# Group topics by domain
+domains <- split(output, sapply(output, function(x) x$topic_domain))
+domain_names <- names(domains)
+
+# Custom CSS
+cat('
+<style>
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+.card-column {
+  width: 24%;
+  margin-right: 1%;
+  border: 1px solid #ccc;
+  padding: 10px;
+  box-sizing: border-box;
+}
+.card-column:nth-child(4n) {
+  margin-right: 0;
+}
+.topic-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.concern {
+  background: lightcoral;
+  color: white;
+  border-radius: 50%;
+  min-width:20px; 
+  text-align:center;
+  margin: 10px;
+  padding: 2px 4px 2px 7px;
+}
+</style>
+')
+
+if(exists("all_concerns") && nrow(all_concerns) > 0) {
+  cat('<h3>Zorgpunten</h3><ul>')
+  for (z in (1:nrow(all_concerns))) {
+    #link <- paste0("sumup_submission.html?id=", URLencode(all_concerns[z]$submissionid))
+    link <- paste0("sumup_submission.html?id=", URLencode(as.character(all_concerns[z]$submissionid)))
+    cat('<li>',format.Date(all_concerns[z]$datereferenced, "%d-%m-%Y"),': ', all_concerns[z]$zorgpunten,' <a href="',link,'" target="_blank" style="text-decoration:none; font-size:16px;">🔍</a>')
+  }
+  cat("</ul>")
+}
+
+cards_per_row <- 4
+domain_order <- unique(sapply(output, function(x) x$topic_domain))
+
+for (i in seq_along(domain_order)) {
+ if ((i - 1) %% cards_per_row == 0) {
+   if (i != 1) cat('</div>\n')
+   cat('<div class="card-row">\n')
+ }
+ domain <- domain_order[i]
+ # Link to single details page with domain query parameter
+ domain_link <- paste0("sumup_details.html?domain=", URLencode(domain))
+ topics <- Filter(function(x) x$topic_domain == domain, output)
+ cat('<div class="card-column">\n')
+ cat('<h4><a href="', domain_link, '" class="card-header-link">', domain,'</a></h4>\n')
+
+  for (topic in topics) {
+   cat('<div class="topic-line">')
+   cat('<span>', bar_icon(topic$quantity_cat), topic$topic_name, '</span>')
+   if(topic$concerns > 0) {
+     cat('<span><span class="concern">', topic$concerns, '</span>', quality_icon(topic$quality_cat), '</span>')
+   } else {
+     cat('<span>', quality_icon(topic$quality_cat), '</span>')
+   }
+   cat('</div>\n')
+ }
+ cat('</div>\n')
+}
+
+cat('</div>\n')
+
+```
