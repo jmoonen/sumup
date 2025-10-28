@@ -1,0 +1,422 @@
+---
+title: "Sum-up Details"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(fontawesome)
+fa_html_dependency()
+```
+
+```{r results='asis', echo=FALSE}
+if(!exists("show_submission_details")) {
+  show_submission_details = TRUE;
+}
+
+cat(sprintf("<script>window.show_submission_details = %s;</script>", 
+ifelse(show_submission_details, "true", "false")))
+
+cat("<script>window.outputData = ", output_json, ";</script>")
+```
+
+
+<div id="filter-container" style="margin-bottom:15px;"></div>
+<div id="domain-content"></div>
+
+<!-- DataTables + RowGroup -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/rowgroup/1.3.1/css/rowGroup.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/rowgroup/1.3.1/js/dataTables.rowGroup.min.js"></script>
+
+<style>
+.comment-tooltip {
+  display: none;
+  position: absolute;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  min-width: 400px;
+  max-width: 700px; /* wider for readability */
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  font-size: 0.95em;
+  z-index: 1000;
+}
+.comment-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  margin-left: 5px;
+  color: blue;
+  font-weight: bold;
+}
+.accordion-item { border:1px solid #ccc; margin-bottom:10px; border-radius:6px; }
+.accordion-header { padding:10px; cursor:pointer; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; }
+.accordion-body { display:none; padding:10px; }
+.concern {
+  background: lightcoral;
+  color: white;
+  border-radius: 50%;
+  min-width:20px; 
+  text-align:center;
+}
+.concern-small {
+  background: lightcoral;
+  color: white;
+  border-radius: 50%;
+  min-width:20px; 
+  text-align:center;
+  margin: 10px;
+  padding: 2px;
+}
+</style>
+
+<script>
+$(function() {
+  if (!window.outputData) {
+    $("#domain-content").html("<p>No data found</p>");
+    return;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const domain = urlParams.get("domain");
+
+  const domainTopics = window.outputData.filter(d => d.topic_domain === domain);
+  if (domainTopics.length === 0) {
+    $("#domain-content").html("<p>No topics found for domain: " + domain + "</p>");
+    return;
+  }
+
+  // ---- Build ordered coschap list (unique, ordered by portfolioid if present, else appended alphabetically) ----
+  const coschapPortfolio = new Map();      // coschap -> min portfolioid (for ordering)
+  const allCoschapsSet   = new Set();      // all coschaps encountered (including those without portfolioid)
+  domainTopics.forEach(topic => {
+    (topic.feedback || []).forEach(f => {
+      const raw = (f.coschap ?? "").toString().trim();
+      const coschap = raw === "" ? "Algemeen" : raw;   // canonical label
+      allCoschapsSet.add(coschap);
+      if (f.portfolioid !== undefined && f.portfolioid !== null && !isNaN(f.portfolioid)) {
+        if (!coschapPortfolio.has(coschap)) coschapPortfolio.set(coschap, Number(f.portfolioid));
+        else coschapPortfolio.set(coschap, Math.min(coschapPortfolio.get(coschap), Number(f.portfolioid)));
+      }
+    });
+  });
+
+  // Known (with portfolioid) in ascending order by portfolioid, then unknown appended alphabetically
+  const known = Array.from(coschapPortfolio.entries()).sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
+  const unknown = Array.from(allCoschapsSet).filter(c => !coschapPortfolio.has(c)).sort((a,b)=>a.localeCompare(b, 'nl'));
+  const coschaps = known.concat(unknown);
+
+  <!-- // ---- Filter checkboxes (one per coschap) ---- -->
+  <!-- let filterHtml = "<strong>Filter op portfolio-onderdeel:</strong> "; -->
+  <!-- coschaps.forEach(c => { -->
+  <!--   filterHtml += `<label style="margin-right:10px;"> -->
+  <!--     <input type="checkbox" class="coschap-filter" value="${c}" checked> ${c} -->
+  <!--   </label>`; -->
+  <!-- }); -->
+  <!-- $("#filter-container").html(filterHtml); -->
+  
+  // Compute earliest & latest date per coschap
+  const coschapDates = {}; // coschap -> {min: Date, max: Date}
+  domainTopics.forEach(topic => {
+    (topic.feedback || []).forEach(f => {
+      const raw = (f.coschap ?? "").toString().trim();
+      const coschap = raw === "" ? "Algemeen" : raw;
+  
+      const dateStr = f.datereferenced;
+      if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const d = new Date(dateStr);
+        if (!coschapDates[coschap]) coschapDates[coschap] = { min: d, max: d };
+        else {
+          if (d < coschapDates[coschap].min) coschapDates[coschap].min = d;
+          if (d > coschapDates[coschap].max) coschapDates[coschap].max = d;
+        }
+      }
+    });
+  });
+  
+  // Sort coschaps by latest (most recent) date
+  const coschapsSorted = Array.from(allCoschapsSet)
+    .sort((a, b) => {
+      const da = coschapDates[a]?.max || new Date(0);
+      const db = coschapDates[b]?.max || new Date(0);
+      return db - da; // descending (most recent first)
+    });
+    
+  // Rank map to keep groups in a fixed order regardless of column sorting
+  const coschapRank = {};
+  coschapsSorted.forEach((c, i) => coschapRank[c] = i + 1);  
+  
+  // Format dates as DD-MM-YYYY
+  function fmtDate(d) {
+    if (!(d instanceof Date) || isNaN(d)) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  }
+  
+  // Build checkbox filter UI
+  let filterHtml = `<div style="float:left;"><strong>Filter op portfolio-onderdeel:</strong>`;
+  coschapsSorted.forEach(c => {
+    const dates = coschapDates[c];
+    let rangeText = "";
+    if (dates) {
+      const from = fmtDate(dates.min);
+      const to = fmtDate(dates.max);
+      rangeText = ` (${from} – ${to})`;
+    }
+    filterHtml += `
+      <label style="display:block; style="margin-right:10px; margin-top:5px;">
+        <input type="checkbox" class="coschap-filter" value="${c}" checked> ${c}${rangeText} <br />
+      </label>`;
+  });
+  filterHtml += `</div>`;
+  // Additional checkboxes for SCORE and FIT
+  filterHtml += `<div style="float: right;"><strong>Kolommen tonen/verbergen:</strong><br>`;
+  filterHtml += `<label style="display:block; margin-bottom:3px;">
+    <input type="checkbox" class="column-toggle" data-column="4"> SCORE
+  </label>`;
+  filterHtml += `<label style="display:block; margin-bottom:3px;">
+    <input type="checkbox" class="column-toggle" data-column="3"> FIT
+  </label></div><div style="clear:both;"></div>`;
+  
+  $("#filter-container").html(filterHtml);
+
+  // ---- Render topics with accordions and tables ----
+  let html = "";
+  domainTopics.forEach((topic, idx) => {
+    const qualityIcon = topic.quality_cat === "positive" ? '<i class="fa fa-line-chart"></i>' : (topic.quality_cat === "negative" ? '<i class="fa fa-exclamation-triangle"></i>' : '');
+    const concernIcon = topic.concerns > 0 ? '<div class="concern">'+topic.concerns+'</div>' : '';
+    console.log(topic);
+    const qtyBars = renderQuantityBars(topic.quantity_cat);
+
+    html += `
+      <div class="accordion-item">
+        <div class="accordion-header" data-target="acc-${idx}">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span>${qtyBars}</span>
+            <div>
+              <strong>${topic.topic_name}</strong><br>
+              <small>${topic.topic_description || ""}</small>
+            </div>
+          </div>
+          <div style="margin-left: 5px;">${concernIcon}</div>
+          <div style="font-size:20px;margin-left: 5px;">${qualityIcon}</div>
+        </div>
+        <div id="acc-${idx}" class="accordion-body">
+          ${renderFeedbackTable(topic.feedback || [], idx)}
+        </div>
+      </div>
+    `;
+  });
+  $("#domain-content").html(html);
+
+  // ---- Accordion toggle ----
+  $(".accordion-header").on("click", function(){
+    const target = $(this).data("target");
+    $("#"+target).slideToggle();
+  });
+
+  // ---- One global custom search for all tables (add once) ----
+  if (!window.__coschapSearchAdded) {
+    $.fn.dataTable.ext.search.push(function(settings, data) {
+      // data[7] = hidden group order; data[6] = hidden coschap label
+      const rowCoschap = (data[6] || "").toString();
+      const selected = $(".coschap-filter:checked").map(function(){ return $(this).val(); }).get();
+      return selected.includes(rowCoschap);
+    });
+    window.__coschapSearchAdded = true;
+  }
+
+  // Redraw all DataTables on checkbox change
+  $(".coschap-filter").on("change", function(){
+    $(".sumup-table").each(function(){
+      const api = $(this).DataTable();
+      api.draw();
+    });
+  });
+
+  // ========================= Helpers =========================
+  function renderQuantityBars(qty){
+    const icons = [
+      "fa-battery-empty",
+      "fa-battery-quarter",
+      "fa-battery-half",
+      "fa-battery-three-quarters",
+      "fa-battery-full"
+    ];
+    
+    // make sure qty is within range 0–4
+    const safeIndex = Math.max(0, Math.min(qty, icons.length - 1));
+    
+    return `<i class="fa ${icons[safeIndex]}"></i>`;
+  }
+
+  function renderPolarityBar(polarity){
+    <!-- if (polarity === null || polarity === undefined || polarity === "") return ""; -->
+    <!-- const value = Math.min(Math.max(parseFloat(polarity), -1), 1); -->
+    <!-- const percent = value * 50; // -50..+50 from center -->
+    <!-- return `<div style="position:relative; width:100px; height:12px; background:#eee;"> -->
+    <!--   <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:#000;"></div> -->
+    <!--   <div style="position:absolute; top:0; bottom:0; background:blue; width:${Math.abs(percent)}%; ${value>=0?"left:50%;":"right:50%;"}"></div> -->
+    <!-- </div>`; -->
+    if (polarity === null || polarity === undefined || polarity === "") return "";
+      const value = Math.min(Math.max(parseFloat(polarity), -1), 1);
+      const percent = value * 50; // -50..+50 from center
+    
+      // choose color based on polarity
+      const color = value >= 0 ? "blue" : "darkblue";
+    
+      return `<div style="position:relative; width:100px; height:12px; background:#eee;">
+        <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:#000;"></div>
+        <div style="position:absolute; top:0; bottom:0; background:${color}; width:${Math.abs(percent)}%; ${
+        value >= 0 ? "left:50%;" : "right:50%;"
+      }"></div>
+      </div>`;
+  }
+
+  function renderCommentIcon(comment, sentence){
+    if (!comment) return "";
+
+    // Normalize: lowercase, remove all punctuation, collapse whitespace, trim
+    const normalize = s => (s || "")
+      .toLowerCase()
+      .replace(/[^\w\s]|_/g, "") // remove all punctuation
+      .replace(/\s+/g, " ")      // collapse all whitespace to single space
+      .trim();                   // remove leading/trailing spaces
+  
+    if (normalize(comment) === normalize(sentence)) return "";
+  
+    return `<span class="comment-wrapper">ⓘ<span class="comment-tooltip">${escapeHtml(comment)}</span></span>`;
+
+  }
+
+  function escapeHtml(s){
+    return (s || "")
+    .toString()
+    .replace(/<\/?[^>]+(>|$)/g, "");
+  }
+
+  function formatDateDDMMYYYY(dateStr){
+    const parts = (dateStr||"").split("-");
+    if (parts.length===3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    return dateStr || "";
+  }
+
+  // ===================== Table builder =======================
+  function renderFeedbackTable(feedback, tableIdx){
+    // Build rows with canonical coschap + stable group order
+    const rows = feedback.map(f => {
+      const raw = (f.coschap ?? "").toString().trim();
+      const coschap = raw === "" ? "Algemeen" : raw;
+      const groupOrder = (coschap in coschapRank) ? coschapRank[coschap] : 9999;
+
+      return {
+        coschap,
+        groupOrder,
+        polarity: f.polarity,
+        sentence: f.sentence || "",
+        comment: f.comment || "",
+        dateRaw: f.datereferenced || "",
+        dateDisp: formatDateDDMMYYYY(f.datereferenced || ""),
+        fitDisp: (f.perc!==undefined && f.perc!==null && !isNaN(f.perc)) ? (Math.round(f.perc) + "%") : "",
+        score: (f.score!==undefined && f.score!==null) ? f.score : "",
+        zorgpunt: (f.zorgpunt==1)? `<span class="concern-small"> ! </span>`: "",
+        link: f.submissionid ? `<a href="sumup_submission.html?id=${f.submissionid}" target="_blank" style="text-decoration:none; font-size:16px;">🔍</a>` : ""
+      };
+    });
+
+    const tableId = `feedback-table-${tableIdx}`;
+    let html = `
+      <table id="${tableId}" class="display sumup-table" style="width:100%;">
+        <thead>
+          <tr>
+            <th>SENTIMENT</th>
+            <th>FEEDBACK</th>
+            <th>DATE</th>
+            <th>FIT</th>
+            <th>SCORE</th>
+            <th>FEEDBACK FORM</th> <!-- hidden when show_submission_details is FALSE -->
+            <th>Coschap</th>       <!-- hidden grouping column -->
+            <th>GroupOrder</th>    <!-- hidden numeric for stable group order -->
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    rows.forEach(r => {
+      html += `
+        <tr>
+          <td style="padding:6px;" data-order="${r.polarity}">${renderPolarityBar(r.polarity)}</td>
+          <td style="padding:6px;">${escapeHtml(r.sentence) + r.zorgpunt} ${renderCommentIcon(r.comment, r.sentence)}</td>
+          <td style="padding:6px; text-align:center;" data-order="${r.dateRaw}">${r.dateDisp}</td>
+          <td style="padding:6px; text-align:center;">${r.fitDisp}</td>
+          <td style="padding:6px; text-align:center;">${r.score}</td>
+          <td style="padding:6px; text-align:center;">${r.link}</td>
+          <td>${escapeHtml(r.coschap)}</td>
+          <td>${r.groupOrder}</td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    console.log("show_submission_details ="+window.show_submission_details)
+
+    // Initialize DataTable with:
+    // - rowGroup on coschap (col 6)
+    // - orderFixed to keep groups in GroupOrder (col 7)
+    // - user sorting applies WITHIN each group
+    setTimeout(() => {
+      $(`#${tableId}`).DataTable({
+        paging: false,
+        info: false,
+        // Keep groups fixed by group order first; default then by DATE (col 2)
+        // Default order: DATE descending
+        order: [[3, 'desc']],
+        orderFixed: { pre: [[7, 'asc']] },   // GroupOrder column keeps group sequence fixed
+        rowGroup: {
+          dataSrc: 6, // coschap column
+          startRender: function(rows, group){
+            return $('<tr/>').append(
+              `<td colspan="6" style="background:#ddd; padding:6px;"><strong>${group}</strong></td>`
+            );
+          }
+        },
+        columnDefs: [
+          { targets: [2,3,4], className: 'dt-center' }, // DATE, FIT, SCORE centered
+          { targets: [3,4], visible: false }, // hide FIT & SCORE by default
+          { targets: 5, visible: window.show_submission_details }, // conditional column visibility
+          { targets: [6,7], visible: false },            // hide Coschap + GroupOrder columns
+          { orderable: false, targets: [1, 5] },   // first (0) and last (5) columns not sortable
+          { orderable: true,  targets: [0, 2, 3, 4] } // the rest remain sortable
+        ]
+      });
+    }, 0);
+
+    return html;
+  }
+  
+  // Toggle column visibility for ALL feedback tables
+  $(document).on("change", ".column-toggle", function() {
+    const colIndex = parseInt($(this).data("column"));
+    const visible = $(this).is(":checked");
+  
+    $(".sumup-table").each(function() {
+      const api = $(this).DataTable();
+      api.column(colIndex).visible(visible);
+    });
+  });
+
+  // ---- Clickable tooltip (ⓘ) ----
+  $(document).on("click",".comment-wrapper",function(e){
+    e.stopPropagation();
+    $(this).find(".comment-tooltip").toggle();
+  });
+  $(document).on("click", function(){
+    $(".comment-tooltip").hide();
+  });
+
+});
+</script>
