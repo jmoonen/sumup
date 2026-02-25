@@ -1,6 +1,6 @@
 Package: sumup
 Title: Utilizing Automated Text Analysis to Support Interpretation of Narrative Feedback
-Version: 1.0.1.9000
+Version: 1.0.2.9000
 Authors@R: 
     person("Joyce", "Moonen - van Loon", , "j.moonen@maastrichtuniversity.nl", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8883-8822"))
@@ -19,7 +19,6 @@ Imports:
     reticulate,
     stats,
     stringr,
-    textclean,
     tibble,
     tidyr,
     tidytext,
